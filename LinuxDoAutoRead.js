@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LinuxDo Auto Read
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.3.0
 // @description  自动刷linuxdo文章
 // @author       lzhcccccch
 // @match        https://linux.do/*
@@ -345,82 +345,13 @@
     }
   }
 
-  // 添加手动跳转按钮 - 用于用户主动跳转
-  function createSkipButton() {
-    const skipButton = document.createElement("button");
-    skipButton.id = "skip-button";
-    skipButton.textContent = "跳过当前文章";
-
-    skipButton.style.position = "fixed";
-    skipButton.style.bottom = "20px";
-    skipButton.style.right = "20px";
-    skipButton.style.zIndex = "9999";
-    skipButton.style.padding = "10px 15px";
-    skipButton.style.borderRadius = "30px";
-    skipButton.style.border = "none";
-    skipButton.style.backgroundColor = "#f39c12";
-    skipButton.style.color = "#ffffff";
-    skipButton.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
-    skipButton.style.cursor = "pointer";
-    skipButton.style.fontWeight = "bold";
-    skipButton.style.transition = "all 0.3s ease";
-
-    // 添加鼠标悬停效果
-    skipButton.onmouseover = function() {
-      this.style.opacity = "0.9";
-      this.style.transform = "scale(1.05)";
-    };
-
-    skipButton.onmouseout = function() {
-      this.style.opacity = "1";
-      this.style.transform = "scale(1)";
-    };
-
-    skipButton.onclick = function() {
-      if (localStorage.getItem("read") === "true" && !isNavigating) {
-        // 先强制滚动到底部，确保内容被标记为已读
-        forceScrollToBottom();
-
-        // 设置导航标志，防止重复触发
-        isNavigating = true;
-
-        // 显示提示
-        const notification = document.createElement("div");
-        notification.textContent = "手动跳转到下一篇...";
-        notification.style.position = "fixed";
-        notification.style.top = "50%";
-        notification.style.left = "50%";
-        notification.style.transform = "translate(-50%, -50%)";
-        notification.style.backgroundColor = "#333";
-        notification.style.color = "#fff";
-        notification.style.padding = "20px";
-        notification.style.borderRadius = "5px";
-        notification.style.zIndex = "10000";
-        document.body.appendChild(notification);
-
-        // 短暂延迟后跳转
-        setTimeout(() => {
-          openNewTopic();
-        }, 1000);
-      }
-    };
-
-    document.body.appendChild(skipButton);
-  }
-
   // 入口函数
   window.addEventListener("load", () => {
     checkFirstRun();
     console.log("autoRead", localStorage.getItem("read"));
 
-    // 创建阅读按钮
-    createReadButton();
-
-    // 创建阅读速度控制按钮
-    createSpeedControlButtons();
-
-    // 创建跳过按钮
-    createSkipButton();
+    // 创建控制面板
+    createControlPanel();
 
     // 检查是否需要开始阅读
     if (localStorage.getItem("read") === "true") {
@@ -447,91 +378,26 @@
     });
   });
 
-  // 创建阅读按钮
-  function createReadButton() {
-    // 阅读按钮
-    const button = document.createElement("button");
-    button.id = "auto-read-button";
-
-    // 设置按钮样式
-    button.style.position = "fixed";
-    button.style.bottom = "20px";
-    button.style.left = "20px";
-    button.style.zIndex = "9999";
-    button.style.padding = "10px 15px";
-    button.style.borderRadius = "30px"; // 圆角按钮
-    button.style.border = "none";
-    button.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)"; // 添加阴影效果
-    button.style.cursor = "pointer";
-    button.style.fontFamily = "Arial, sans-serif";
-    button.style.fontSize = "14px";
-    button.style.fontWeight = "bold";
-    button.style.transition = "all 0.3s ease"; // 添加过渡效果
-
-    // 根据当前状态设置按钮文本和颜色
-    const isReading = localStorage.getItem("read") === "true";
-    button.textContent = isReading ? "停止阅读" : "开始阅读";
-
-    if (isReading) {
-      button.style.backgroundColor = "#ff6b6b"; // 红色背景表示停止
-      button.style.color = "#ffffff"; // 白色文字
-    } else {
-      button.style.backgroundColor = "#4CAF50"; // 绿色背景表示开始
-      button.style.color = "#ffffff"; // 白色文字
-    }
-
-    // 添加鼠标悬停效果
-    button.onmouseover = function() {
-      this.style.opacity = "0.9";
-      this.style.transform = "scale(1.05)";
-    };
-
-    button.onmouseout = function() {
-      this.style.opacity = "1";
-      this.style.transform = "scale(1)";
-    };
-
-    document.body.appendChild(button);
-
-    button.onclick = function () {
-      const currentlyReading = localStorage.getItem("read") === "true";
-      const newReadState = !currentlyReading;
-      localStorage.setItem("read", newReadState.toString());
-
-      // 更新按钮状态
-      updateReadButton();
-
-      if (!newReadState) {
-        // 停止阅读
-        stopScrolling();
-        isNavigating = false;
-        localStorage.removeItem("navigatingToNextTopic");
-      } else {
-        // 开始阅读 - 从当前位置开始
-        startReading();
-      }
-    };
-  }
-
-  // 创建速度控制按钮
-  function createSpeedControlButtons() {
+  // 创建控制面板 - 包含所有按钮的垂直排列
+  function createControlPanel() {
     const controlPanel = document.createElement("div");
-    controlPanel.id = "speed-control-panel";
+    controlPanel.id = "control-panel";
     controlPanel.style.position = "fixed";
     controlPanel.style.bottom = "20px";
-    controlPanel.style.left = "150px";
+    controlPanel.style.right = "20px";
     controlPanel.style.zIndex = "9999";
     controlPanel.style.display = "flex";
+    controlPanel.style.flexDirection = "column";
     controlPanel.style.gap = "10px";
+    controlPanel.style.alignItems = "center";
 
-    // 慢速按钮 - 适合细读
+    // 创建速度按钮
     const slowButton = createSpeedButton("慢速", "#3498db", () => {
       scrollSettings.scrollStep = 10;
       scrollSettings.scrollStepInterval = 80;
       scrollSettings.pauseAfterScreen = 1500;
-      scrollSettings.bottomDetectionThreshold = 7; // 更高的阈值，更确保到底部
+      scrollSettings.bottomDetectionThreshold = 7;
 
-      // 如果正在阅读，重新开始滚动以应用新速度
       if (localStorage.getItem("read") === "true") {
         stopScrolling();
         startReading();
@@ -541,14 +407,12 @@
     });
     slowButton.id = "speed-slow";
 
-    // 中速按钮 - 适合正常浏览
     const mediumButton = createSpeedButton("中速", "#2ecc71", () => {
       scrollSettings.scrollStep = 20;
       scrollSettings.scrollStepInterval = 50;
       scrollSettings.pauseAfterScreen = 800;
-      scrollSettings.bottomDetectionThreshold = 5; // 默认阈值
+      scrollSettings.bottomDetectionThreshold = 5;
 
-      // 如果正在阅读，重新开始滚动以应用新速度
       if (localStorage.getItem("read") === "true") {
         stopScrolling();
         startReading();
@@ -558,14 +422,12 @@
     });
     mediumButton.id = "speed-medium";
 
-    // 快速按钮 - 适合快速扫描
     const fastButton = createSpeedButton("快速", "#e74c3c", () => {
       scrollSettings.scrollStep = 30;
       scrollSettings.scrollStepInterval = 30;
       scrollSettings.pauseAfterScreen = 300;
-      scrollSettings.bottomDetectionThreshold = 3; // 较低的阈值，但仍然确保到底部
+      scrollSettings.bottomDetectionThreshold = 3;
 
-      // 如果正在阅读，重新开始滚动以应用新速度
       if (localStorage.getItem("read") === "true") {
         stopScrolling();
         startReading();
@@ -575,15 +437,118 @@
     });
     fastButton.id = "speed-fast";
 
-    // 添加按钮到控制面板
+    // 创建跳过按钮
+    const skipButton = document.createElement("button");
+    skipButton.id = "skip-button";
+    skipButton.textContent = "跳过当前文章";
+    skipButton.style.padding = "10px 15px";
+    skipButton.style.width = "140px";
+    skipButton.style.borderRadius = "30px";
+    skipButton.style.border = "none";
+    skipButton.style.backgroundColor = "#f39c12";
+    skipButton.style.color = "#ffffff";
+    skipButton.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    skipButton.style.cursor = "pointer";
+    skipButton.style.fontWeight = "bold";
+    skipButton.style.transition = "all 0.3s ease";
+    skipButton.style.textAlign = "center";
+
+    skipButton.onmouseover = function() {
+      this.style.opacity = "0.9";
+      this.style.transform = "scale(1.05)";
+    };
+
+    skipButton.onmouseout = function() {
+      this.style.opacity = "1";
+      this.style.transform = "scale(1)";
+    };
+
+    skipButton.onclick = function() {
+      if (localStorage.getItem("read") === "true" && !isNavigating) {
+        forceScrollToBottom();
+        isNavigating = true;
+
+        const notification = document.createElement("div");
+        notification.textContent = "手动跳转到下一篇...";
+        notification.style.position = "fixed";
+        notification.style.top = "50%";
+        notification.style.left = "50%";
+        notification.style.transform = "translate(-50%, -50%)";
+        notification.style.backgroundColor = "#333";
+        notification.style.color = "#fff";
+        notification.style.padding = "20px";
+        notification.style.borderRadius = "5px";
+        notification.style.zIndex = "10000";
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          openNewTopic();
+        }, 1000);
+      }
+    };
+
+    // 创建阅读按钮
+    const readButton = document.createElement("button");
+    readButton.id = "auto-read-button";
+    readButton.style.padding = "10px 15px";
+    readButton.style.width = "140px";
+    readButton.style.borderRadius = "30px";
+    readButton.style.border = "none";
+    readButton.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    readButton.style.cursor = "pointer";
+    readButton.style.fontFamily = "Arial, sans-serif";
+    readButton.style.fontSize = "14px";
+    readButton.style.fontWeight = "bold";
+    readButton.style.transition = "all 0.3s ease";
+    readButton.style.textAlign = "center";
+
+    const isReading = localStorage.getItem("read") === "true";
+    readButton.textContent = isReading ? "停止阅读" : "开始阅读";
+
+    if (isReading) {
+      readButton.style.backgroundColor = "#ff6b6b";
+      readButton.style.color = "#ffffff";
+    } else {
+      readButton.style.backgroundColor = "#4CAF50";
+      readButton.style.color = "#ffffff";
+    }
+
+    readButton.onmouseover = function() {
+      this.style.opacity = "0.9";
+      this.style.transform = "scale(1.05)";
+    };
+
+    readButton.onmouseout = function() {
+      this.style.opacity = "1";
+      this.style.transform = "scale(1)";
+    };
+
+    readButton.onclick = function() {
+      const currentlyReading = localStorage.getItem("read") === "true";
+      const newReadState = !currentlyReading;
+      localStorage.setItem("read", newReadState.toString());
+
+      updateReadButton();
+
+      if (!newReadState) {
+        stopScrolling();
+        isNavigating = false;
+        localStorage.removeItem("navigatingToNextTopic");
+      } else {
+        startReading();
+      }
+    };
+
+    // 按照从上到下的顺序添加按钮：慢速、中速、快速、跳过当前文章、开始阅读
     controlPanel.appendChild(slowButton);
     controlPanel.appendChild(mediumButton);
     controlPanel.appendChild(fastButton);
+    controlPanel.appendChild(skipButton);
+    controlPanel.appendChild(readButton);
 
-    // 添加控制面板到页面
     document.body.appendChild(controlPanel);
 
-    // 获取上次使用的速度设置，如果没有则默认为中速
+    // 获取上次使用的速度设置
     const lastSpeed = localStorage.getItem("readingSpeed") || "medium";
 
     // 根据上次使用的速度设置应用相应的参数
@@ -607,7 +572,6 @@
         scrollSettings.bottomDetectionThreshold = 3;
         break;
       default:
-        // 默认为中速
         scrollSettings.scrollStep = 20;
         scrollSettings.scrollStepInterval = 50;
         scrollSettings.pauseAfterScreen = 800;
@@ -624,6 +588,7 @@
     const button = document.createElement("button");
     button.textContent = text;
     button.style.padding = "8px 12px";
+    button.style.width = "140px";
     button.style.borderRadius = "20px";
     button.style.border = "none";
     button.style.backgroundColor = color;
@@ -634,6 +599,7 @@
     button.style.fontWeight = "bold";
     button.style.opacity = "0.7";
     button.style.transition = "all 0.3s ease";
+    button.style.textAlign = "center";
 
     // 添加鼠标悬停效果
     button.onmouseover = function() {
@@ -677,27 +643,4 @@
     // 保存当前速度设置
     localStorage.setItem("readingSpeed", speed);
   }
-
-  // 添加键盘快捷键支持
-  document.addEventListener('keydown', (event) => {
-    // 空格键 - 开始/停止阅读
-    if (event.code === 'Space' && event.target === document.body) {
-      event.preventDefault(); // 防止页面滚动
-
-      const readButton = document.getElementById("auto-read-button");
-      if (readButton) {
-        readButton.click();
-      }
-    }
-
-    // 向下箭头键 - 手动跳转到下一篇
-    if (event.code === 'ArrowDown' && event.ctrlKey) {
-      event.preventDefault();
-
-      const skipButton = document.getElementById("skip-button");
-      if (skipButton) {
-        skipButton.click();
-      }
-    }
-  });
 })();
