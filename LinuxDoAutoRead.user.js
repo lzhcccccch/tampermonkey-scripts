@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LinuxDo Auto Read
 // @namespace    http://tampermonkey.net/
-// @version      1.3.0
+// @version      1.4.0
 // @description  自动刷linuxdo文章
 // @author       lzhcccccch
 // @match        https://linux.do/*
@@ -384,12 +384,24 @@
     controlPanel.id = "control-panel";
     controlPanel.style.position = "fixed";
     controlPanel.style.bottom = "20px";
-    controlPanel.style.left = "20px"; // 修改: 从右下角改为左下角
+    controlPanel.style.left = "20px";
     controlPanel.style.zIndex = "9999";
     controlPanel.style.display = "flex";
     controlPanel.style.flexDirection = "column";
-    controlPanel.style.gap = "10px";
-    controlPanel.style.alignItems = "center";
+    controlPanel.style.gap = "8px"; // 减小按钮间距，使整体更紧凑
+    controlPanel.style.alignItems = "flex-start"; // 左对齐按钮
+    controlPanel.style.backgroundColor = "rgba(240, 240, 240, 0.8)"; // 添加半透明背景
+    controlPanel.style.padding = "10px";
+    controlPanel.style.borderRadius = "10px";
+    controlPanel.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.1)"; // 添加阴影效果
+
+    // 创建速度按钮组
+    const speedButtonGroup = document.createElement("div");
+    speedButtonGroup.style.display = "flex";
+    speedButtonGroup.style.gap = "5px";
+    speedButtonGroup.style.marginBottom = "5px";
+    speedButtonGroup.style.width = "100%";
+    speedButtonGroup.style.justifyContent = "space-between";
 
     // 创建速度按钮
     const slowButton = createSpeedButton("慢速", "#3498db", () => {
@@ -406,6 +418,7 @@
       highlightActiveSpeedButton("slow");
     });
     slowButton.id = "speed-slow";
+    slowButton.style.flex = "1";
 
     const mediumButton = createSpeedButton("中速", "#2ecc71", () => {
       scrollSettings.scrollStep = 20;
@@ -421,6 +434,7 @@
       highlightActiveSpeedButton("medium");
     });
     mediumButton.id = "speed-medium";
+    mediumButton.style.flex = "1";
 
     const fastButton = createSpeedButton("快速", "#e74c3c", () => {
       scrollSettings.scrollStep = 30;
@@ -436,14 +450,73 @@
       highlightActiveSpeedButton("fast");
     });
     fastButton.id = "speed-fast";
+    fastButton.style.flex = "1";
 
-    // 创建跳过按钮
+    // 将速度按钮添加到按钮组
+    speedButtonGroup.appendChild(slowButton);
+    speedButtonGroup.appendChild(mediumButton);
+    speedButtonGroup.appendChild(fastButton);
+
+    // 创建阅读按钮
+    const readButton = document.createElement("button");
+    readButton.id = "auto-read-button";
+    readButton.style.padding = "10px 15px";
+    readButton.style.width = "100%"; // 使按钮宽度与面板宽度一致
+    readButton.style.borderRadius = "8px";
+    readButton.style.border = "none";
+    readButton.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    readButton.style.cursor = "pointer";
+    readButton.style.fontFamily = "Arial, sans-serif";
+    readButton.style.fontSize = "14px"; // 增大主要按钮的字体
+    readButton.style.fontWeight = "bold";
+    readButton.style.transition = "all 0.3s ease";
+    readButton.style.textAlign = "center";
+    readButton.style.marginBottom = "5px"; // 添加底部间距
+
+    const isReading = localStorage.getItem("read") === "true";
+    readButton.textContent = isReading ? "停止阅读" : "开始阅读";
+
+    if (isReading) {
+      readButton.style.backgroundColor = "#ff6b6b";
+      readButton.style.color = "#ffffff";
+    } else {
+      readButton.style.backgroundColor = "#4CAF50";
+      readButton.style.color = "#ffffff";
+    }
+
+    readButton.onmouseover = function() {
+      this.style.opacity = "0.9";
+      this.style.transform = "scale(1.03)";
+    };
+
+    readButton.onmouseout = function() {
+      this.style.opacity = "1";
+      this.style.transform = "scale(1)";
+    };
+
+    readButton.onclick = function() {
+      const currentlyReading = localStorage.getItem("read") === "true";
+      const newReadState = !currentlyReading;
+      localStorage.setItem("read", newReadState.toString());
+
+      updateReadButton();
+
+      if (!newReadState) {
+        stopScrolling();
+        isNavigating = false;
+        localStorage.removeItem("navigatingToNextTopic");
+      } else {
+        startReading();
+      }
+    };
+
+    // 创建跳过按钮 (现在改名为"下一话题")
     const skipButton = document.createElement("button");
     skipButton.id = "skip-button";
-    skipButton.textContent = "跳过当前文章";
-    skipButton.style.padding = "8px 12px"; // 修改: 调整padding与其他按钮一致
-    skipButton.style.width = "120px"; // 修改: 缩小按钮宽度
-    skipButton.style.borderRadius = "20px"; // 修改: 调整为与其他按钮一致的圆角
+    skipButton.textContent = "下一话题"; // 修改文案
+    skipButton.style.padding = "10px 15px";
+    skipButton.style.width = "100%"; // 使按钮宽度与面板宽度一致
+    skipButton.style.borderRadius = "8px";
     skipButton.style.border = "none";
     skipButton.style.backgroundColor = "#f39c12";
     skipButton.style.color = "#ffffff";
@@ -452,11 +525,11 @@
     skipButton.style.fontWeight = "bold";
     skipButton.style.transition = "all 0.3s ease";
     skipButton.style.textAlign = "center";
-    skipButton.style.fontSize = "12px"; // 修改: 调整字体大小与其他按钮一致
+    skipButton.style.fontSize = "14px"; // 与"开始阅读"按钮字体大小一致
 
     skipButton.onmouseover = function() {
       this.style.opacity = "0.9";
-      this.style.transform = "scale(1.05)";
+      this.style.transform = "scale(1.03)";
     };
 
     skipButton.onmouseout = function() {
@@ -488,64 +561,21 @@
       }
     };
 
-    // 创建阅读按钮
-    const readButton = document.createElement("button");
-    readButton.id = "auto-read-button";
-    readButton.style.padding = "8px 12px"; // 修改: 调整padding与其他按钮一致
-    readButton.style.width = "120px"; // 修改: 缩小按钮宽度
-    readButton.style.borderRadius = "20px"; // 修改: 调整为与其他按钮一致的圆角
-    readButton.style.border = "none";
-    readButton.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
-    readButton.style.cursor = "pointer";
-    readButton.style.fontFamily = "Arial, sans-serif";
-    readButton.style.fontSize = "12px"; // 修改: 调整字体大小与其他按钮一致
-    readButton.style.fontWeight = "bold";
-    readButton.style.transition = "all 0.3s ease";
-    readButton.style.textAlign = "center";
+    // 添加标题
+    const titleElement = document.createElement("div");
+    titleElement.textContent = "LinuxDo 阅读助手";
+    titleElement.style.fontSize = "14px";
+    titleElement.style.fontWeight = "bold";
+    titleElement.style.marginBottom = "8px";
+    titleElement.style.textAlign = "center";
+    titleElement.style.width = "100%";
+    titleElement.style.color = "#333";
 
-    const isReading = localStorage.getItem("read") === "true";
-    readButton.textContent = isReading ? "停止阅读" : "开始阅读";
-
-    if (isReading) {
-      readButton.style.backgroundColor = "#ff6b6b";
-      readButton.style.color = "#ffffff";
-    } else {
-      readButton.style.backgroundColor = "#4CAF50";
-      readButton.style.color = "#ffffff";
-    }
-
-    readButton.onmouseover = function() {
-      this.style.opacity = "0.9";
-      this.style.transform = "scale(1.05)";
-    };
-
-    readButton.onmouseout = function() {
-      this.style.opacity = "1";
-      this.style.transform = "scale(1)";
-    };
-
-    readButton.onclick = function() {
-      const currentlyReading = localStorage.getItem("read") === "true";
-      const newReadState = !currentlyReading;
-      localStorage.setItem("read", newReadState.toString());
-
-      updateReadButton();
-
-      if (!newReadState) {
-        stopScrolling();
-        isNavigating = false;
-        localStorage.removeItem("navigatingToNextTopic");
-      } else {
-        startReading();
-      }
-    };
-
-    // 按照从上到下的顺序添加按钮：慢速、中速、快速、跳过当前文章、开始阅读
-    controlPanel.appendChild(slowButton);
-    controlPanel.appendChild(mediumButton);
-    controlPanel.appendChild(fastButton);
-    controlPanel.appendChild(skipButton);
+    // 按照新的顺序添加元素：标题、速度按钮组、开始阅读按钮、下一话题按钮
+    controlPanel.appendChild(titleElement);
+    controlPanel.appendChild(speedButtonGroup);
     controlPanel.appendChild(readButton);
+    controlPanel.appendChild(skipButton); // 将跳过按钮放在最后
 
     document.body.appendChild(controlPanel);
 
@@ -588,9 +618,8 @@
   function createSpeedButton(text, color, onClick) {
     const button = document.createElement("button");
     button.textContent = text;
-    button.style.padding = "8px 12px";
-    button.style.width = "120px"; // 修改: 缩小按钮宽度
-    button.style.borderRadius = "20px";
+    button.style.padding = "8px 5px";
+    button.style.borderRadius = "6px";
     button.style.border = "none";
     button.style.backgroundColor = color;
     button.style.color = "#ffffff";
@@ -637,7 +666,7 @@
     const activeButton = document.getElementById(`speed-${speed}`);
     if (activeButton) {
       activeButton.style.opacity = "1";
-      activeButton.style.transform = "scale(1.1)";
+      activeButton.style.transform = "scale(1.05)";
       activeButton.classList.add("active");
     }
 
