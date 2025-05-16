@@ -384,7 +384,7 @@
     controlPanel.id = "control-panel";
     controlPanel.style.position = "fixed";
     controlPanel.style.bottom = "20px";
-    controlPanel.style.right = "20px";
+    controlPanel.style.left = "20px"; // 修改: 从右下角改为左下角
     controlPanel.style.zIndex = "9999";
     controlPanel.style.display = "flex";
     controlPanel.style.flexDirection = "column";
@@ -441,9 +441,9 @@
     const skipButton = document.createElement("button");
     skipButton.id = "skip-button";
     skipButton.textContent = "跳过当前文章";
-    skipButton.style.padding = "10px 15px";
-    skipButton.style.width = "140px";
-    skipButton.style.borderRadius = "30px";
+    skipButton.style.padding = "8px 12px"; // 修改: 调整padding与其他按钮一致
+    skipButton.style.width = "120px"; // 修改: 缩小按钮宽度
+    skipButton.style.borderRadius = "20px"; // 修改: 调整为与其他按钮一致的圆角
     skipButton.style.border = "none";
     skipButton.style.backgroundColor = "#f39c12";
     skipButton.style.color = "#ffffff";
@@ -452,6 +452,7 @@
     skipButton.style.fontWeight = "bold";
     skipButton.style.transition = "all 0.3s ease";
     skipButton.style.textAlign = "center";
+    skipButton.style.fontSize = "12px"; // 修改: 调整字体大小与其他按钮一致
 
     skipButton.onmouseover = function() {
       this.style.opacity = "0.9";
@@ -490,14 +491,14 @@
     // 创建阅读按钮
     const readButton = document.createElement("button");
     readButton.id = "auto-read-button";
-    readButton.style.padding = "10px 15px";
-    readButton.style.width = "140px";
-    readButton.style.borderRadius = "30px";
+    readButton.style.padding = "8px 12px"; // 修改: 调整padding与其他按钮一致
+    readButton.style.width = "120px"; // 修改: 缩小按钮宽度
+    readButton.style.borderRadius = "20px"; // 修改: 调整为与其他按钮一致的圆角
     readButton.style.border = "none";
     readButton.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
     readButton.style.cursor = "pointer";
     readButton.style.fontFamily = "Arial, sans-serif";
-    readButton.style.fontSize = "14px";
+    readButton.style.fontSize = "12px"; // 修改: 调整字体大小与其他按钮一致
     readButton.style.fontWeight = "bold";
     readButton.style.transition = "all 0.3s ease";
     readButton.style.textAlign = "center";
@@ -588,7 +589,7 @@
     const button = document.createElement("button");
     button.textContent = text;
     button.style.padding = "8px 12px";
-    button.style.width = "140px";
+    button.style.width = "120px"; // 修改: 缩小按钮宽度
     button.style.borderRadius = "20px";
     button.style.border = "none";
     button.style.backgroundColor = color;
