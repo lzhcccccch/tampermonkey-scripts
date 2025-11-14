@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         LinuxDo Auto Read
+// @name         LinuxDo & IDCFlare Auto Read
 // @namespace    http://tampermonkey.net/
-// @version      1.5.0
-// @description  自动刷linuxdo文章
+// @version      1.6.0
+// @description  自动刷 linux.do 与 idcflare.com 文章
 // @author       lzhcccccch
 // @match        https://linux.do/*
+// @match        https://idcflare.com/*
 // @updateURL    https://raw.githubusercontent.com/lzhcccccch/tampermonkey-scripts/main/LinuxDoAutoRead.user.js
 // @downloadURL  https://raw.githubusercontent.com/lzhcccccch/tampermonkey-scripts/main/LinuxDoAutoRead.user.js
 // @grant        none
@@ -14,11 +15,14 @@
 (function () {
 "use strict";
 
-// 只针对 linux.do 网站生效
-const BASE_URL = "https://linux.do";
+// 支持的站点列表
+const ALLOWED_ORIGINS = ["https://linux.do", "https://idcflare.com"];
 
-// 如果当前网站不是 linux.do，则直接返回
-if (!window.location.href.startsWith(BASE_URL)) {
+// 当前站点 origin
+const BASE_URL = window.location.origin;
+
+// 如果不在允许站点内，直接返回
+if (!ALLOWED_ORIGINS.includes(BASE_URL)) {
   return;
 }
 
